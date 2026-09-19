@@ -18,11 +18,12 @@ def _loads(raw: str | None) -> dict:
 
 
 def _meter_kwh(result: dict, payload: dict):
-    if "gross_kwh" in result and "net_kwh" in result:
+    # 与户详情 _billed_kwh 同口径：有抵扣快照时显示保存当时的净电量。
+    if "net_kwh" in result:
         net = float(result["net_kwh"])
         if net <= 1e-9:
             return 0.0
-        return float(result["gross_kwh"])
+        return net
     if "kwh" in result:
         return result["kwh"]
     return payload.get("kwh")
