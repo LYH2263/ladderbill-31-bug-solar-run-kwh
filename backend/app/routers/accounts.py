@@ -1,37 +1,18 @@
-import json
-
 from fastapi import APIRouter, HTTPException
 
+from app.routers.run_fields import billed_kwh, loads_blob
 from app.services.billing_service import BillingService
 
 router = APIRouter(tags=["accounts"])
 
 
-def _loads(raw: str | None) -> dict:
-    if not raw:
-        return {}
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def _billed_kwh(result: dict, payload: dict):
-    if "net_kwh" in result:
-        return float(result["net_kwh"])
-    if "kwh" in result:
-        return result["kwh"]
-    return payload.get("kwh")
-
-
 def _account_run(row: dict) -> dict:
-    payload = _loads(row.get("input_json"))
-    result = _loads(row.get("result_json"))
+    payload = loads_blob(row.get("input_json"))
+    result = loads_blob(row.get("result_json"))
     return {
         "id": row["id"],
         "kind": row["kind"],
-        "billed_kwh": _billed_kwh(result, payload),
+        "billed_kwh": billed_kwh(result, payload),
         "total": result.get("total"),
         "created_at": row["created_at"],
     }
